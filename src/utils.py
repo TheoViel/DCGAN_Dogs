@@ -46,3 +46,22 @@ def load_model_weights(model, filename, verbose=1, cp_folder=CP_PATH, strict=Tru
                 map_location='cpu'),
             strict=strict)
     return model
+
+
+def plot_losses(infos):
+    fig, ax1 = plt.subplots(figsize=(12, 8))
+    plt.plot(infos['discriminator_loss'], label='discriminator loss', c='darkorange')
+    ax1.set_ylabel('Discriminator Loss', color='darkorange', size=14)
+    ax1.tick_params(axis='y', colors='darkorange')
+    ax1.set_xlabel('Epochs', size=14)
+    plt.grid(True)
+    plt.legend(loc=(0.45, 0.95))
+
+    ax2 = ax1.twinx()
+    plt.plot(infos['generator_loss'], label='generator loss', c='dodgerblue')
+    ax2.set_ylabel('Generator Loss', color='dodgerblue', size=14)
+    ax2.tick_params(axis='y', colors='dodgerblue')
+    plt.legend(loc=(0.45, 0.9))
+
+    plt.title('Loss evolution', size=15)
+    plt.show()

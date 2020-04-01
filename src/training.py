@@ -25,18 +25,23 @@ def generate(generator, noise=None, races=None, n=5, n_plot=0, latent_dim=128):
     return generated_images
 
 
-def latent_walk(generator, n=10, latent_dim=128):
+def latent_walk(generator, n=10, latent_dim=128, a=None, b=None):
     
-    a = np.random.normal(size=latent_dim)
-    b = np.random.normal(size=latent_dim)
+    if a is None:
+        a = np.random.normal(size=latent_dim)
+    if b is None:
+        b = np.random.normal(size=latent_dim)
+        
     race = torch.from_numpy(np.random.randint(0, NUM_CLASSES, size=1)).long().cuda()
-    
     plt.figure(figsize=(n * 3, 3))
     
     for j in range(n+1):
         noise = j / n * a + (1 - j / n) * b
-        noise = noise / np.linalg.norm(noise)
+        noise = noise / np.linalg.norm(noise)  # redresse ?
+#         noise = a
+        
         noise = torch.from_numpy(noise).view((1, latent_dim, 1, 1)).float().cuda()
+        
         
         plt.subplot(1, n+1, j+1)
         img = generate(generator, noise=noise, races=race, latent_dim=latent_dim)

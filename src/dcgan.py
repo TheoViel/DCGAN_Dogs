@@ -96,20 +96,18 @@ class DCGanDiscriminator(nn.Module):
     def __init__(
         self,
         n=128,
+        nb_ft=1,
         nb_classes=120,
         embedding_dim=32,
-        nb_ft=64,
         slope=0.2,
         use_embed=False,
-        use_ft_matching=False,
         use_bn=True,
     ):
 
         super().__init__()
 
         self.use_embed = use_embed
-        self.use_ft_matching = use_ft_matching
-        self.nb_ft = nb_ft if (use_embed or use_ft_matching) else 1
+        self.nb_ft = nb_ft
 
         self.cnn = nn.Sequential(
             DisBlock(
@@ -146,15 +144,15 @@ class DCGanDiscriminator(nn.Module):
         self.dense = nn.Linear(nb_ft + embedding_dim, 1)
         self.dense_classes = nn.Linear(self.nb_ft + embedding_dim, nb_classes)
 
-    def forward(self, imgs, label=None, return_classes=False):
+    def forward(self, imgs, label):
         features = self.cnn(imgs).view(-1, self.nb_ft)
 
-        if self.use_embed and label is not None:
+        if self.use_embed:
             embed = self.embedding(label)
             x = torch.cat((features, embed), 1)
 
             out = self.dense(x)
-            out_classes = self.dense_classes(x) if return_classes else 0
+            out_classes = self.dense_classes(x)
         else:
             out = features
             out_classes = 0

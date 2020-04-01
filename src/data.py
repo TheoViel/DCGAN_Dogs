@@ -33,8 +33,8 @@ base_transforms = Compose([Resize(64), CenterCrop(64)])
 additional_transforms = Compose(
     [
         RandomHorizontalFlip(p=0.5),
-        # ToTensor(),
-        # MinMax(-1, 1),
+        ToTensor(),
+        MinMax(-1, 1),
     ]
 )
 
