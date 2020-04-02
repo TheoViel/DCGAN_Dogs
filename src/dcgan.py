@@ -37,12 +37,12 @@ class DCGanGenerator(nn.Module):
         nb_classes=120,
         embedding_dim=32,
         use_bn=True,
-        use_embed=False,
+        conditional=False,
     ):
         super().__init__()
 
-        self.use_embed = use_embed
-        self.embedding_dim = embedding_dim if use_embed else 0
+        self.conditional = conditional
+        self.embedding_dim = embedding_dim if conditional else 0
         self.embedding = torch.nn.Embedding(nb_classes, embedding_dim)
 
         self.cnn = nn.Sequential(
@@ -68,7 +68,7 @@ class DCGanGenerator(nn.Module):
         )
 
     def forward(self, noise, label=None):
-        if self.use_embed:
+        if self.conditional:
             noise = torch.cat(
                 (noise, self.embedding(label).view(-1, self.embedding_dim, 1, 1)), 1
             )
@@ -100,14 +100,17 @@ class DCGanDiscriminator(nn.Module):
         nb_classes=120,
         embedding_dim=32,
         slope=0.2,
-        use_embed=False,
+        conditional=False,
+        auxiliary_clf=False,
         use_bn=True,
     ):
-
         super().__init__()
+        assert conditional != auxiliary_clf, "Cannot use aux clf and conditional at the same time"
 
-        self.use_embed = use_embed
-        self.nb_ft = nb_ft
+        self.conditional = conditional
+        self.auxiliary_clf = auxiliary_clf
+        self.embedding_dim = embedding_dim if conditional else 0
+        self.nb_ft = nb_ft  if (conditional or auxiliary_clf) else 1
 
         self.cnn = nn.Sequential(
             DisBlock(
@@ -139,20 +142,22 @@ class DCGanDiscriminator(nn.Module):
             ),  # nb_ft x 1 x 1
         )
 
-        # embed
-        self.embedding = torch.nn.Embedding(nb_classes, embedding_dim)
-        self.dense = nn.Linear(nb_ft + embedding_dim, 1)
-        self.dense_classes = nn.Linear(self.nb_ft + embedding_dim, nb_classes)
+        self.embedding = torch.nn.Embedding(nb_classes, self.embedding_dim)
+        self.dense = nn.Linear(self.nb_ft + self.embedding_dim, 1)
+        self.dense_classes = nn.Linear(self.nb_ft, nb_classes)
 
     def forward(self, imgs, label):
         features = self.cnn(imgs).view(-1, self.nb_ft)
 
-        if self.use_embed:
+        if self.conditional:
             embed = self.embedding(label)
             x = torch.cat((features, embed), 1)
-
             out = self.dense(x)
-            out_classes = self.dense_classes(x)
+
+        elif self.auxiliary_clf:
+            out = self.dense(features)
+            out_classes = self.dense_classes(features)
+
         else:
             out = features
             out_classes = 0
