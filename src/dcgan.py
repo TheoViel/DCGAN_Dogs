@@ -105,7 +105,7 @@ class DCGanDiscriminator(nn.Module):
         use_bn=True,
     ):
         super().__init__()
-        assert conditional != auxiliary_clf, "Cannot use aux clf and conditional at the same time"
+        assert not (conditional and auxiliary_clf), "Cannot use aux clf and conditional at the same time"
 
         self.conditional = conditional
         self.auxiliary_clf = auxiliary_clf
@@ -153,6 +153,7 @@ class DCGanDiscriminator(nn.Module):
             embed = self.embedding(label)
             x = torch.cat((features, embed), 1)
             out = self.dense(x)
+            out_classes = 0
 
         elif self.auxiliary_clf:
             out = self.dense(features)

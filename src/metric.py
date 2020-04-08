@@ -200,13 +200,14 @@ def compute_fid(generated_path, real_path, graph_path, model_params, eps=10e-15)
     return calculate_kid_given_paths([generated_path, real_path], "Inception", graph_path)
 
 
-def tmp_eval(generator, folder='../output/tmp_images', n_images=10000, im_batch_size=50, latent_dim=128):
+def tmp_eval(generator, folder='../output/tmp_images', n_images=10000, 
+             im_batch_size=50, latent_dim=128, nb_classes=120):
     if os.path.exists(folder):
         shutil.rmtree(folder, ignore_errors=True)
     os.mkdir(folder)
 
     for i_b in range(0, n_images, im_batch_size):
-        gen_images = generate(generator, n=im_batch_size, latent_dim=latent_dim)
+        gen_images = generate(generator, n=im_batch_size, latent_dim=latent_dim, nb_classes=nb_classes)
         for i_img in range(gen_images.size(0)):
             save_image(gen_images[i_img, :, :, :], os.path.join(folder, f'img_{i_b+i_img}.png'))
     
