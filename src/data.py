@@ -1,5 +1,6 @@
 import os
 import torch
+import numpy as np
 import xml.etree.ElementTree as ET
 
 from torchvision.transforms import *
@@ -8,6 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.datasets.folder import has_file_allowed_extension, default_loader
 
 from params import ANNOTATION_PATH
+
 
 class MinMax:
     def __init__(self, min_val, max_val):
@@ -48,7 +50,9 @@ class DogDataset(Dataset):
         self.additional_transforms = additional_transforms
         self.imgs, self.labels = self.load_subfolders_images(folder)
         
-        self.y = torch.from_numpy(LabelEncoder().fit(self.classes).transform(self.labels)).long()
+        self.y = [self.classes.index(l) for l in self.labels]
+        self.y = torch.from_numpy(np.array(self.y)).long()
+#         self.y = torch.from_numpy(LabelEncoder().fit(self.classes).transform(self.labels)).long()
         
     def __getitem__(self, index):
         return self.additional_transforms(self.imgs[index]), self.y[index]

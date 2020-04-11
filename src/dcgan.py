@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
+from params import NUM_CLASSES
 
+ONE_HOT_MATRIX = torch.eye(NUM_CLASSES).cuda()
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -38,13 +40,19 @@ class DCGanGenerator(nn.Module):
         embedding_dim=32,
         use_bn=True,
         conditional=False,
+        one_hot=False,
     ):
         super().__init__()
 
         self.conditional = conditional
+        self.one_hot = one_hot
         self.embedding_dim = embedding_dim if conditional else 0
+        
+        if one_hot:
+            self.embedding_dim = nb_classes
+        
         self.embedding = torch.nn.Embedding(nb_classes, embedding_dim)
-
+        
         self.cnn = nn.Sequential(
             GenBlock(
                 latent_dim + self.embedding_dim,
@@ -68,10 +76,16 @@ class DCGanGenerator(nn.Module):
         )
 
     def forward(self, noise, label=None):
-        if self.conditional:
+        if self.conditional and label is not None:
+            if self.one_hot:
+                label_info = ONE_HOT_MATRIX[label]
+            else:
+                label_info = self.embedding(label)
+               
             noise = torch.cat(
-                (noise, self.embedding(label).view(-1, self.embedding_dim, 1, 1)), 1
+                (noise, label_info.view(-1, self.embedding_dim, 1, 1)), 1
             )
+           
         return self.cnn(noise)
 
 
@@ -165,7 +179,71 @@ class DCGanDiscriminator(nn.Module):
 
         return out, out_classes, features
 
+      
+class CDCGanDiscriminator(nn.Module):
+    """ https://arxiv.org/pdf/1802.05637.pdf """
+    def __init__(
+        self,
+        n=128,
+        nb_ft=8*128,
+        nb_classes=120,
+        slope=0.2,
+        use_bn=True,
+    ):
+        super().__init__()
+        self.nb_ft = nb_ft
 
+        self.cnn = nn.Sequential(
+            DisBlock(
+                3, n, kernel_size=4, stride=2, padding=1, slope=slope, use_bn=False
+            ),  # n x 32 x 32
+            DisBlock(
+                n, 2 * n, kernel_size=4, stride=2, padding=1, slope=slope, use_bn=use_bn
+            ),  # 2n x 16 x 16
+            DisBlock(
+                2 * n,
+                4 * n,
+                kernel_size=4,
+                stride=2,
+                padding=1,
+                slope=slope,
+                use_bn=use_bn,
+            ),  # 4n x 8 x 8
+            DisBlock(
+                4 * n,
+                8 * n,
+                kernel_size=4,
+                stride=2,
+                padding=1,
+                slope=slope,
+                use_bn=use_bn,
+            ),  # 8n x 4 x 4
+            nn.Conv2d(
+                n * 8, self.nb_ft, kernel_size=4, stride=1, padding=0, bias=False
+            ),  # self.nb_ft x 1 x 1
+        )
+
+        self.embedding = nn.Embedding(nb_classes, self.nb_ft, max_norm=1)
+        
+        self.conv = nn.Sequential(
+            nn.Conv2d(self.nb_ft, 1, (1, 1), bias=True),
+            nn.LeakyReLU(slope),
+        )
+
+    def forward(self, imgs, label):
+        
+        y = self.cnn(imgs)
+        y_ = y.view(-1, self.nb_ft)
+        
+        labels = self.embedding(label)
+        projection_scores = (y_ * labels).sum(dim=-1).view(-1, 1)  # [bs, 1]
+        
+        y = self.conv(y).view(-1, 1)
+        out = y + projection_scores
+
+        return out, 0, y_
+    
+    
 if __name__ == "__main__":
     import numpy as np
 
