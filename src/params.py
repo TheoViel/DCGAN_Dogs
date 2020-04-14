@@ -16,7 +16,7 @@ IMG_SIZE = 64
 NUM_CLASSES = 120
 
 
-['Irish_wolfhound',
+CLASSES = ['Irish_wolfhound',
  'Gordon_setter',
  'Japanese_spaniel',
  'Samoyed',
