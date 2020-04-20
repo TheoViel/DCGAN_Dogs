@@ -14,7 +14,7 @@ input
 │   ├── dog_image_2.jpg
 │   └── ...
 ├── classify_image_graph_def.pb
-├── Annotation
+└── Annotation
     ├── dog_breed_1
     ├── dog_breed_2
     └── ...
