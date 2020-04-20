@@ -19,3 +19,11 @@ input
     ├── dog_breed_2
     └── ...
 ```
+
+## Code
+
+The code is in the `src` directory. To run experiments, use the notebook in the 'notebook' directory
+
+## Experiments
+
+Runs were saved as a `.html` files to share the results of different set-ups. Check `DCGAN Experiments.xlsx` for an overview of the experiments.
