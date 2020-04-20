@@ -1,4 +1,4 @@
-input/all-dogs/
+*.png
 checkpoints
 output
 *.pyc
