@@ -24,7 +24,7 @@ input
 
 ## Code
 
-The code is in the `src` directory. To run experiments, use the notebook in the 'notebook' directory
+The code is in the `src` directory. To run experiments, use the notebook in the `notebook` directory
 
 ## Experiments
 
