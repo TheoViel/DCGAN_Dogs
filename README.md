@@ -1,4 +1,6 @@
-# Generating Dogs using the DCGAN architecture
+# Generating Dogs Using the DCGAN Architecture
+
+For further explaination about the project consider checking the report, `report.pdf`.
 
 ## Data
 
